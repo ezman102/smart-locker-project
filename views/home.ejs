@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - SmartLocker Campus System</title>
+    <link rel="stylesheet" href="../css/keypad.css">
+    <link rel="stylesheet" href="../css/calendar.css">
+    <link rel="stylesheet" href="../css/bottom-bar.css">   
+    <link rel="stylesheet" href="../css/sidebar-main.css">   
+    <link rel="stylesheet" href="../css/table.css">   
+    <link rel="stylesheet" href="../css/main.css">   
+    <link rel="stylesheet" href="../css/qrcode.css">   
+    <link rel="stylesheet" href="../css/emergency.css">   
+    <link rel="stylesheet" href="../css/user-settings.css">
+
+</head>
+<body>
+    <div class="sidebar">
+        <a href="#home" id="homeLink">Home</a>
+        <a href="#virtualKeypad" onclick="showVirtualKeypad()">Virtual Keypad Login</a>
+        <a href="#lockerStatus" onclick="loadLockerStatus()">Locker Status</a>
+        <a href="#camera" onclick="showCamera()">Live Camera</a>
+        <a href="#location" onclick="showLocation()">Locker Location</a>
+        <a href="#calendar" onclick="showCalendar()">Academic calendar</a>
+        <a href="#suspiciousReports">Suspicious Alerts</a>
+        <a href="#userSettings" onclick="showUserSettings()">User Settings</a>
+        <a href="#qrCode" onclick="QRCodefunction()">QR Code</a>
+        <% if (userRole === 'guard') { %>
+            <a href="#emergencyUnlock" onclick="showEmergencyUnlock()" style="color: red;">Emergency Locker Unlock</a>
+        <% } %>
+    </div>
+
+
+    <div class="main-content">
+        <div class="title-bar">
+            <h1>SmartLocker Campus System</h1>
+        </div>
+        
+        <div class="content">
+            showWelcomePage();
+        </div>
+
+        <div class="bottom-bar">
+            Contact us: +123456789 | Email: info@smartlockercampus.com <br>© 2023 SmartLocker Campus. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+
+<script>
+function showWelcomePage() {
+    const displayName = '<%= displayName %>';
+    const lockerNumber = '<%= lockerNumber %>'; // Get locker number from server
+    const contentDiv = document.querySelector('.content');
+    const greeting = getGreetingByTime();
+
+    contentDiv.innerHTML = `
+        <div class="welcome-container">
+            <h2 class="welcome-title">${greeting}, ${displayName}!</h2>
+            <p class="welcome-message">Here is your locker number: [ ${lockerNumber} ]</p>
+            <img src="../images/locker.jpg" alt="locker" class="welcome-image">
+        </div>
+    `;
+}
+
+function getGreetingByTime() {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+}
+
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+    showWelcomePage();
+});
+
+    </script>
+    
+<script>
+
+
+document.getElementById('homeLink').addEventListener('click', function() {
+  showWelcomePage();
+});
+
+
+  function loadLockerStatus() {
+      const channelID = 2315925;
+      //2315925 ,51245
+      fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?results=60`)
+          .then(response => response.json())
+          .then(data => {
+              displayLockerStatus(data.feeds);
+          });
+  }
+
+  function displayLockerStatus(feeds) {
+    const contentDiv = document.querySelector('.content');
+    contentDiv.innerHTML = '<h2>Locker Status</h2><select id="dataSelection" onchange="updateChartDisplay()"><option value="Humidity">Humidity</option><option value="Temperature">Temperature</option><option value="Light">Light</option></select>';
+
+    const chartContainerStyle = 'width:100%; max-width:flex; height:500px; margin:auto;';
+    // Prepare containers for charts
+    const canvasHumidity = document.createElement('canvas');
+    canvasHumidity.style = chartContainerStyle;
+    canvasHumidity.id = 'HumidityChart';
+
+
+    const canvastemperature = document.createElement('canvas');
+    canvastemperature.style = chartContainerStyle;
+    canvastemperature.id = 'TemperatureChart';
+
+
+    const canvasLight = document.createElement('canvas');
+    canvasLight.style = chartContainerStyle;
+    canvasLight.id = 'LightChart';
+    
+
+    contentDiv.appendChild(canvasHumidity);
+    contentDiv.appendChild(canvastemperature);
+    contentDiv.appendChild(canvasLight);
+
+    // Create Humidity Chart
+    new Chart(canvasHumidity, {
+        type: 'line',
+        data: {
+                labels: feeds.map(feed => new Date(feed.created_at).toLocaleTimeString()),
+                datasets: [{
+                    label: 'Humidity',
+                    data: feeds.map(feed => feed.field1), // Assuming field1 is Humidity
+                    borderColor: 'rgb(54, 162, 235)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                }]
+            }
+    });
+
+    // Create temperature Chart
+    new Chart(canvastemperature, {
+        type: 'line',
+        data: {
+                labels: feeds.map(feed => new Date(feed.created_at).toLocaleTimeString()),
+                datasets: [{
+                    label: 'Temperature',
+                    data: feeds.map(feed => feed.field2), // Assuming field2 is temperature
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                }]
+            }
+    });
+
+    // Create Light Chart
+    new Chart(canvasLight, {
+        type: 'line',
+        data: {
+                labels: feeds.map(feed => new Date(feed.created_at).toLocaleTimeString()),
+                datasets: [{
+                    label: 'Light',
+                    data: feeds.map(feed => feed.field3), // Assuming field3 is Light
+                    borderColor: 'rgb(255, 206, 86)',
+                    backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                }]
+            }
+    });
+
+    // Initially, hide all except temperature chart
+    canvastemperature.style.display = 'none';
+    canvasLight.style.display = 'none';
+}
+
+function updateChartDisplay() {
+    const selectedData = document.getElementById('dataSelection').value;
+    document.getElementById('HumidityChart').style.display = selectedData === 'Humidity' ? 'block' : 'none';
+    document.getElementById('TemperatureChart').style.display = selectedData === 'Temperature' ? 'block' : 'none';
+    document.getElementById('LightChart').style.display = selectedData === 'Light' ? 'block' : 'none';
+}
+
+// function showCalendar() {
+//     const contentDiv = document.querySelector('.content');
+//     contentDiv.innerHTML = `
+//         <h2>Calendar</h2>
+//         <div style="width:100%; height:600px;">
+//             <iframe src="https://calendar.google.com/calendar/embed?src=c2lueXVreXVlbkBnbWFpbC5jb20&ctz=Your_Timezone" style="border: 0" width="800" height="600" frameborder="0" scrolling="no"></iframe>
+//         </div>
+//     `;
+// }
+
+
+
+
+let selectedYear = new Date().getFullYear(); // Default to current year
+
+function initializeYearSelector() {
+    const yearSelect = document.getElementById('yearSelect');
+    if (yearSelect) {
+        yearSelect.addEventListener('change', updateCalendarYear);
+    }
+}
+
+function updateCalendarYear() {
+    selectedYear = parseInt(document.getElementById('yearSelect').value);
+    const calendarDiv = document.getElementById('calendarDiv');
+    if(calendarDiv) {
+        calendarDiv.innerHTML = generateCalendar(); 
+    }
+}
+
+
+
+function createYearSelector() {
+    const yearSelectorDiv = document.createElement('div');
+    yearSelectorDiv.id = 'yearSelector';
+    yearSelectorDiv.innerHTML = `
+        <label for="yearSelect">Select Year:</label>
+        <select id="yearSelect">
+            <option value="${new Date().getFullYear()}">${new Date().getFullYear()}</option>
+            <option value="${new Date().getFullYear() + 1}">${new Date().getFullYear() + 1}</option>
+        </select>
+    `;
+    const yearSelect = yearSelectorDiv.querySelector('#yearSelect');
+    yearSelect.addEventListener('change', updateCalendarYear);
+
+    return yearSelectorDiv;
+}
+
+
+function showCalendar() {
+    const contentDiv = document.querySelector('.content');
+    contentDiv.innerHTML = ''; // Clear existing content
+
+    // Append year selector
+    const yearSelector = createYearSelector();
+    contentDiv.appendChild(yearSelector);
+
+    // Generate and append calendar
+    const calendarDiv = document.createElement('div');
+    calendarDiv.id = 'calendarDiv';
+    calendarDiv.innerHTML = generateCalendar();
+    contentDiv.appendChild(calendarDiv);
+}
+
+
+function generateCalendar() {
+    let calendarHTML = '<div class="calendar">';
+    for (let month = 0; month < 12; month++) {
+        calendarHTML += createMonthCalendar(month, selectedYear);
+    }
+    calendarHTML += '</div>';
+    return calendarHTML;
+}
+
+
+
+
+const rentalStartDate = new Date(2023, 8, 12); // 12 September 2023
+const rentalEndDate = new Date(2024, 6, 31);   // 31 July 2024
+
+function getRentalDates(year) {
+    return {
+        start: new Date(year, 8, 12), // 12 September
+        end: new Date(year + 1, 6, 31) // 31 July of the next year
+    };
+}
+
+
+function createMonthCalendar(month, year) {
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    let date = new Date(year, month, 1);
+
+    let monthCalendarHTML = '<div class="month">';
+    monthCalendarHTML += `<h3>${monthNames[month]} ${year}</h3>`;
+    monthCalendarHTML += '<div class="days">';
+
+    // Days Header
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    days.forEach(day => {
+        monthCalendarHTML += `<div class="day-header">${day}</div>`;
+    });
+
+    // Padding days
+    for (let i = 0; i < date.getDay(); i++) {
+        monthCalendarHTML += '<div class="day"></div>';
+    }
+
+    // Actual days
+    while (date.getMonth() === month) {
+        let specialDateClass = '';
+        let specialDateDescription = '';
+
+        // Check if it's the start or end of the rental period
+        if (date.getTime() === rentalStartDate.getTime()) {
+            specialDateClass = 'rental-start';
+            specialDateDescription = '<div>Rental Starts</div>';
+        } else if (date.getTime() === rentalEndDate.getTime()) {
+            specialDateClass = 'rental-end';
+            specialDateDescription = '<div>Return Locker</div>';
+        }
+
+        monthCalendarHTML += `<div class="day ${specialDateClass}">${date.getDate()}${specialDateDescription}</div>`;
+        date.setDate(date.getDate() + 1);
+    }
+
+    monthCalendarHTML += '</div></div>';
+    return monthCalendarHTML;
+}
+
+
+function showVirtualKeypad() {
+    const contentDiv = document.querySelector('.content');
+    contentDiv.innerHTML = `
+        <input type="text" id="display" readonly>
+        <div id="keypad">
+          <button class="button number">1</button>
+          <button class="button number">2</button>
+          <button class="button number">3</button>
+          <button class="button number">4</button>
+          <button class="button number">5</button>
+          <button class="button number">6</button>
+          <button class="button number">7</button>
+          <button class="button number">8</button>
+          <button class="button number">9</button>
+          <button class="button number">0</button>
+          <button class="button symbol">A</button>
+          <button class="button symbol">B</button>
+          <button class="button symbol">C</button>
+          <button class="button symbol">D</button>
+          <button class="button symbol">*</button>
+          <button class="button symbol">#</button>
+        </div>
+        <button id="clearButton">Clear</button>
+        <button id="submitButton">Submit</button>
+    `;
+
+    document.querySelectorAll('#keypad .button').forEach(button => {
+        button.addEventListener('click', () => appendKey(button.textContent));
+
+        
+    });
+    document.getElementById('submitButton').addEventListener('click', submitKeypadInput);
+    document.getElementById('clearButton').addEventListener('click', clearDisplay);
+}
+
+
+function submitKeypadInput() {
+    const inputCode = document.getElementById('display').value;
+    const correctPassword = "12345678";
+    const fieldToUpdate = 5; 
+    const apiKey = "B66AQC1B5H7758EU"; 
+
+    let updateURL = `https://api.thingspeak.com/update?api_key=${apiKey}`;
+
+    if (inputCode === correctPassword) {
+        updateURL += `&field${fieldToUpdate}=1`;
+    } else {
+        updateURL += `&field${fieldToUpdate}=0`;
+    }
+
+    fetch(updateURL)
+        .then(response => response.text())
+        .then(data => {
+            if (data > 0) { // ThingSpeak returns the entry number if the update was successful
+                console.log('ThingSpeak update successful. Entry number: ' + data);
+                if (inputCode === correctPassword) {
+                    alert('Locker Unlocked!');
+                } else {
+                    alert('Incorrect password!');
+                }
+            } else {
+                console.log('ThingSpeak update failed.');
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+
+    clearDisplay();
+}
+
+
+
+function appendKey(keyValue) {
+    const display = document.getElementById('display');
+    display.value += keyValue;
+}
+
+function clearDisplay() {
+    document.getElementById('display').value = '';
+}
+
+function showLocation() {
+    const contentDiv = document.querySelector('.content');
+    contentDiv.innerHTML = `
+        <h2>Your locker Location</h2>
+        <div id="map" style="width:100%;height:500px;">
+            <iframe
+                width="100%"
+                height="100%"
+                frameborder="0" style="border:0"
+                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyAWrJNADj1_Lhiv0Gqg4bP6XLVO7tyUp0E&q=22.3370342,114.1701451" allowfullscreen>
+            </iframe>
+        </div>
+    `;
+}
+
+function showCamera() {
+    const contentDiv = document.querySelector('.content');
+    contentDiv.innerHTML = `
+        <h2>Live Camera Feed</h2>
+        <div>
+            <label for="resolution">Resolution:</label>
+            <select id="resolution" onchange="changeCameraResolution()">
+                <option value="UXGA">1600x1200</option>
+                <option value="SXGA">1280x1024</option>
+                <option value="XGA">1024x768</option>
+                <option value="SVGA">800x600</option>
+                <option value="VGA">640x480</option>
+                <option value="CIF">400x296</option>
+                <option value="QVGA">320x240</option>
+                <option value="HQVGA">240x176</option>
+                <option selected="selected" value="QQVGA">160x120</option>
+            </select>
+        </div>
+        <div id="camera-feed" style="width:100%;height:auto;">
+            <img id="camera-stream" src="http://192.168.207.233:81/stream" style="width:100%;height:auto;">
+        </div>
+    `;
+}
+
+function changeCameraResolution() {
+    const resolution = document.getElementById('resolution').value;
+}
+
+function showSuspiciousAlerts() {
+    const channelID = 2315925;
+    const apiKey = "CGTJDYPH6BL5TVIP"; // Your ThingSpeak Read API key
+    const fieldNumber = 5; // Field number for locker status
+    const results = 10; // Number of results to retrieve
+
+    let readURL = `https://api.thingspeak.com/channels/${channelID}/fields/${fieldNumber}.json?api_key=${apiKey}&results=${results}`;
+
+    fetch(readURL)
+        .then(response => response.json())
+        .then(data => {
+            buildStatusTable(data.feeds);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function buildStatusTable(feeds) {
+    const contentDiv = document.querySelector('.content');
+    let tableHTML = '<h2>Suspicious Alerts</h2><table><tr><th>Time</th><th>Status</th></tr>';
+
+    feeds.forEach(feed => {
+        const status = feed.field5 === "1" ? 'Unlocked' : 'Locked';
+        const rowClass = feed.field5 === "1" ? 'suspicious' : ''; // Add a class for styling if unlocked
+        const time = new Date(feed.created_at).toLocaleString();
+        tableHTML += `<tr class="${rowClass}"><td>${time}</td><td>${status}</td></tr>`;
+    });
+
+    tableHTML += '</table>';
+    contentDiv.innerHTML = tableHTML;
+}
+
+document.querySelector('a[href="#suspiciousReports"]').addEventListener('click', showSuspiciousAlerts);
+
+
+function QRCodefunction() {
+    const contentDiv = document.querySelector('.content');
+    contentDiv.innerHTML = '<h2>Scan QR Code</h2>';
+
+    // Add camera feed element for scanning
+    const cameraFeed = document.createElement('video');
+    cameraFeed.id = 'qrScanner';
+    cameraFeed.style.width = '40%';
+    contentDiv.appendChild(cameraFeed);
+
+    // Add a section to display the scanned QR code data
+    const scannedDataContainer = document.createElement('div');
+    scannedDataContainer.className = 'scanned-data-container';
+
+    const scannedDataTitle = document.createElement('div');
+    scannedDataTitle.className = 'scanned-data-title';
+    scannedDataTitle.textContent = 'Scanned Data:';
+
+    const scannedDataContent = document.createElement('div');
+    scannedDataContent.className = 'scanned-data-content';
+    scannedDataContent.id = 'scannedData';
+
+    scannedDataContainer.appendChild(scannedDataTitle);
+    scannedDataContainer.appendChild(scannedDataContent);
+    contentDiv.appendChild(scannedDataContainer);
+
+    // Initialize the scanner
+    let scanner = new Instascan.Scanner({ video: document.getElementById('qrScanner') });
+    scanner.addListener('scan', function (content) {
+        document.getElementById('scannedData').textContent = content;
+    });
+
+    // Start the camera and scanning
+    Instascan.Camera.getCameras().then(function (cameras) {
+        if (cameras.length > 0) {
+            scanner.start(cameras[0]);
+        } else {
+            console.error('No cameras found.');
+            alert('No cameras found.');
+        }
+    }).catch(function (e) {
+        console.error(e);
+        alert(e);
+    });
+
+    // QR Code Container
+    const qrContainer = document.createElement('div');
+    qrContainer.className = 'qr-container';
+
+    // Title
+    const qrTitle = document.createElement('h2');
+    qrTitle.className = 'qr-title';
+    qrTitle.textContent = 'Your locker QR code will appear here.';
+    qrContainer.appendChild(qrTitle);
+
+    // QR Code
+    const qrCodeDiv = document.createElement('div');
+    qrCodeDiv.id = 'qrCode';
+    qrCodeDiv.className = 'qr-code';
+    qrContainer.appendChild(qrCodeDiv);
+
+    // Description
+    const qrDescription = document.createElement('div');
+    qrDescription.className = 'qr-description';
+    qrDescription.textContent = 'Your locker information is in the QR code.';
+    qrContainer.appendChild(qrDescription);
+
+    // Append to Content Div
+    contentDiv.appendChild(qrContainer);
+
+    // Generate QR Code
+    new QRCode(document.getElementById('qrCode'), {
+        text: 'Locker Number',  // Replace with actual locker number
+        width: 128,
+        height: 128,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+}
+
+
+function showUserSettings() {
+    const contentDiv = document.querySelector('.content');
+    contentDiv.innerHTML = '';
+
+    // User Settings Container
+    const userSettingsContainer = document.createElement('div');
+    userSettingsContainer.className = 'user-settings-container';
+
+    // Title
+    const userSettingsTitle = document.createElement('h2');
+    userSettingsTitle.className = 'user-settings-title';
+    userSettingsTitle.textContent = 'User Settings (Reset Password)';
+    userSettingsContainer.appendChild(userSettingsTitle);
+
+    // Form
+    const form = document.createElement('form');
+    form.id = 'userSettingsForm';
+    form.className = 'user-settings-form';
+    form.innerHTML = `
+        <label for="userInput">Username/Email:</label>
+        <input type="text" id="userInput" name="userInput" placeholder="Enter your username or email"><br>
+        <label for="newPassword">New Password:</label>
+        <input type="password" id="newPassword" name="newPassword"><br>
+        <input type="submit" value="Update Password">
+    `;
+    userSettingsContainer.appendChild(form);
+
+    // Append to Content Div
+    contentDiv.appendChild(userSettingsContainer);
+
+    // Event Listener for Form Submission
+    document.getElementById('userSettingsForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        updatePassword();
+    });
+}
+
+
+function updatePassword() {
+    const userInput = document.getElementById('userInput').value;
+    const newPassword = document.getElementById('newPassword').value;
+
+    const formData = new URLSearchParams();
+    formData.append('userInput', userInput);
+    formData.append('newPassword', newPassword);
+
+    fetch('/updatePassword', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData
+    })
+    .then(response => response.text())
+    .then(data => {
+        alert(data); // Display a message to the user
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+document.querySelector('a[href="#userSettings"]').addEventListener('click', showUserSettings);
+
+function showEmergencyUnlock() {
+    const contentDiv = document.querySelector('.content');
+    contentDiv.innerHTML = '';
+
+    // Emergency Container
+    const emergencyContainer = document.createElement('div');
+    emergencyContainer.className = 'emergency-container';
+
+    // Title
+    const emergencyTitle = document.createElement('h2');
+    emergencyTitle.className = 'emergency-title';
+    emergencyTitle.textContent = 'Emergency Locker Unlock';
+    emergencyContainer.appendChild(emergencyTitle);
+
+    // Form
+    const form = document.createElement('form');
+    form.id = 'emergencyUnlockForm';
+    form.className = 'emergency-form';
+    form.innerHTML = `
+        <label for="lockerNumber">Locker Number:</label>
+        <input type="text" id="lockerNumber" name="lockerNumber"><br>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username"><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password"><br>
+        <input type="submit" value="Unlock Locker">
+    `;
+    emergencyContainer.appendChild(form);
+
+    // Append to Content Div
+    contentDiv.appendChild(emergencyContainer);
+
+    // Event Listener for Form Submission
+    document.getElementById('emergencyUnlockForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        emergencyUnlock();
+    });
+}
+
+
+function emergencyUnlock() {
+    const lockerNumber = document.getElementById('lockerNumber').value;
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    // Assuming you have an endpoint '/emergencyUnlock' to handle this request
+    const formData = new URLSearchParams();
+    formData.append('lockerNumber', lockerNumber);
+    formData.append('username', username);
+    formData.append('password', password);
+
+    fetch('/emergencyUnlock', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData
+    })
+    .then(response => response.text())
+    .then(data => {
+        alert(data); // Display a message to the user
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+</script>
+
+<script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
