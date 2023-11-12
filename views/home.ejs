@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="../css/qrcode.css">   
     <link rel="stylesheet" href="../css/emergency.css">   
     <link rel="stylesheet" href="../css/user-settings.css">
-
 </head>
 <body>
     <div class="sidebar">
@@ -30,7 +29,6 @@
             <a href="#emergencyUnlock" onclick="showEmergencyUnlock()" style="color: red;">Emergency Locker Unlock</a>
         <% } %>
     </div>
-
 
     <div class="main-content">
         <div class="title-bar">
@@ -69,11 +67,10 @@ function showWelcomePage() {
 
 function getGreetingByTime() {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
+    if (hour < 12) return 'Good Morninging';
     if (hour < 18) return 'Good Afternoon';
     return 'Good Evening';
 }
-
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -178,19 +175,6 @@ function updateChartDisplay() {
     document.getElementById('TemperatureChart').style.display = selectedData === 'Temperature' ? 'block' : 'none';
     document.getElementById('LightChart').style.display = selectedData === 'Light' ? 'block' : 'none';
 }
-
-// function showCalendar() {
-//     const contentDiv = document.querySelector('.content');
-//     contentDiv.innerHTML = `
-//         <h2>Calendar</h2>
-//         <div style="width:100%; height:600px;">
-//             <iframe src="https://calendar.google.com/calendar/embed?src=c2lueXVreXVlbkBnbWFpbC5jb20&ctz=Your_Timezone" style="border: 0" width="800" height="600" frameborder="0" scrolling="no"></iframe>
-//         </div>
-//     `;
-// }
-
-
-
 
 let selectedYear = new Date().getFullYear(); // Default to current year
 
