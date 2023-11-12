@@ -1,4 +1,3 @@
-Based on the HTML and JavaScript code you provided, it seems like you have developed a web application for a "SmartLocker Campus System." I will create a README.md file that outlines the key features and functionalities of your application. This file can be placed in the root of your project directory.
 
 ---
 
@@ -46,4 +45,3 @@ For support or queries, reach out to us at info@smartlockercampus.com.
 
 ---
 
-This README provides a basic structure. You should customize it further to accurately represent your project, its setup, usage instructions, contribution guidelines, and any other important information.
