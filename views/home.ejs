@@ -81,7 +81,7 @@ document.getElementById('homeLink').addEventListener('click', function() {
     const contentDiv = document.querySelector('.content');
     contentDiv.innerHTML = '<h2>Locker Status</h2><select id="dataSelection" onchange="updateChartDisplay()"><option value="Humidity">Humidity</option><option value="Temperature">Temperature</option><option value="Light">Light</option></select>';
 
-    const chartContainerStyle = 'width:100%; max-width:flex; height:500px; margin:auto;';
+    const chartContainerStyle = 'width:95%; max-width:flex; height:450px; margin:auto;';
     // Prepare containers for charts
     const canvasHumidity = document.createElement('canvas');
     canvasHumidity.style = chartContainerStyle;
