@@ -3,9 +3,15 @@
     padding: 20px;
     padding-bottom: 60px; /* Add padding at the bottom that is equal to or greater than the bottom bar's height */
     overflow: auto; /* Ensure scrollbar appears if content is larger than the screen */
-    background-color: #f5f5f5; /* A light gray background that's easy on the eyes */
+    background-color: #f5f5f5; 
 }
 
+.title-bar {
+    background-color: #004a7c;
+    color: #ffffff;
+    padding: 1px 1px;
+    text-align: center;
+}
 
 .bottom-bar {
     position: fixed;
