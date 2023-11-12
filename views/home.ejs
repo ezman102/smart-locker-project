@@ -32,7 +32,7 @@
 
     <div class="main-content">
         <div class="title-bar">
-            <h1>SmartLocker Campus System</h1>
+            <h1>SmartLocker Campus System 🔒</h1>
         </div>
         
         <div class="content">
@@ -48,36 +48,19 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+<script src="../js/welcome.js"></script>
+<script>
+    var displayName = '<%= displayName %>';
+    var lockerNumber = '<%= lockerNumber %>';
+</script>
 
 <script>
-function showWelcomePage() {
-    const displayName = '<%= displayName %>';
-    const lockerNumber = '<%= lockerNumber %>'; // Get locker number from server
-    const contentDiv = document.querySelector('.content');
-    const greeting = getGreetingByTime();
-
-    contentDiv.innerHTML = `
-        <div class="welcome-container">
-            <h2 class="welcome-title">${greeting}, ${displayName}!</h2>
-            <p class="welcome-message">Here is your locker number: [ ${lockerNumber} ]</p>
-            <img src="../images/locker.jpg" alt="locker" class="welcome-image">
-        </div>
-    `;
-}
-
-function getGreetingByTime() {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 18) return 'Good Afternooning';
-    return 'Good Evening';
-}
 
 document.addEventListener('DOMContentLoaded', (event) => {
     showWelcomePage();
 });
     </script>
 <script>
-
 
 document.getElementById('homeLink').addEventListener('click', function() {
   showWelcomePage();
