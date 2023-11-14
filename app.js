@@ -1,10 +1,12 @@
-  const express = require('express');
-  const path = require('path');
-  const bcrypt = require('bcrypt');
-  const { MongoClient } = require('mongodb');
+const express = require('express');
+const app = express();
+const path = require('path');
+const fs = require('fs');
+const https = require('https');
+const bcrypt = require('bcrypt');
+const { MongoClient } = require('mongodb');
 
-  const app = express();
-  const port = 3000;
+const port = 3000;
 
   // MongoDB setup
   const mongoUrl = 'mongodb://127.0.0.1:27017';
@@ -23,27 +25,37 @@
     try {
       await client.connect();
       console.log('Connected successfully to MongoDB server');
-      db = client.db(dbName);
-
-      // Start the server after the database connection is established
-      app.listen(port, () => {
-        console.log(`Server running at http://localhost:${port}/`);
-      });
-
+      db = client.db(dbName); // Set the db variable
     } catch (error) {
       console.error('Failed to connect to MongoDB:', error);
-      process.exit(1); // Exit the process if unable to connect
+      process.exit(1);
     }
   }
 
+  async function startServer() {
+    await connectToDB(); // Make sure DB is connected before starting the server
+  
+    const httpsServer = https.createServer(credentials, app);
+    httpsServer.listen(port, () => {
+      console.log(`HTTPS Server running at https://localhost:${port}/`);
+    });
+  }
+  
   connectToDB();
+
+  startServer();
 
   app.get('/', (req, res) => {
     res.render('login');
   });
 
+  const privateKey = fs.readFileSync('localhost.key', 'utf8');
+  const certificate = fs.readFileSync('localhost.cert', 'utf8');
+  
+  const credentials = { key: privateKey, cert: certificate };
 
   app.post('/login', async (req, res) => {
+    console.log(req.body); 
     const userInput = req.body.username; // Username or email
     const password = req.body.password;
 

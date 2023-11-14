@@ -530,43 +530,70 @@ function QRCodefunction() {
     // Add camera feed element for scanning
     const cameraFeed = document.createElement('video');
     cameraFeed.id = 'qrScanner';
-    cameraFeed.style.width = '40%';
+    cameraFeed.style.width = '80%';
     contentDiv.appendChild(cameraFeed);
 
     // Add a section to display the scanned QR code data
     const scannedDataContainer = document.createElement('div');
     scannedDataContainer.className = 'scanned-data-container';
-
     const scannedDataTitle = document.createElement('div');
     scannedDataTitle.className = 'scanned-data-title';
     scannedDataTitle.textContent = 'Scanned Data:';
-
     const scannedDataContent = document.createElement('div');
     scannedDataContent.className = 'scanned-data-content';
     scannedDataContent.id = 'scannedData';
-
     scannedDataContainer.appendChild(scannedDataTitle);
     scannedDataContainer.appendChild(scannedDataContent);
     contentDiv.appendChild(scannedDataContainer);
 
     // Initialize the scanner
+    const cameraSelect = document.createElement('select');
+    cameraSelect.id = 'cameraSelect';
+    contentDiv.appendChild(cameraSelect);
+
     let scanner = new Instascan.Scanner({ video: document.getElementById('qrScanner') });
     scanner.addListener('scan', function (content) {
         document.getElementById('scannedData').textContent = content;
     });
 
-    // Start the camera and scanning
     Instascan.Camera.getCameras().then(function (cameras) {
+        cameras.forEach((camera, i) => {
+            const opt = document.createElement('option');
+            opt.value = camera.id; // Use camera id for value
+            opt.innerHTML = camera.name || `Camera ${i + 1}`;
+            cameraSelect.appendChild(opt);
+        });
+
         if (cameras.length > 0) {
-            scanner.start(cameras[0]);
+            scanner.start(cameras[0]); // Start the first camera by default
         } else {
             console.error('No cameras found.');
             alert('No cameras found.');
         }
+
+        // Handle camera change
+        cameraSelect.addEventListener('change', function () {
+            scanner.stop(); // Stop the current camera
+            const selectedCamera = cameras.find(c => c.id === this.value);
+            if (selectedCamera) {
+                scanner.start(selectedCamera);
+            }
+        });
     }).catch(function (e) {
         console.error(e);
         alert(e);
     });
+
+        // Handle camera change
+        cameraSelect.addEventListener('change', function () {
+        if (currentCamera) {
+            scanner.stop(currentCamera);
+        }
+        const cameraIndex = parseInt(this.value, 10);
+        currentCamera = cameras[cameraIndex];
+        scanner.start(currentCamera);
+    });
+
 
     // QR Code Container
     const qrContainer = document.createElement('div');
