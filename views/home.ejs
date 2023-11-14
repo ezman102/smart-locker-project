@@ -29,6 +29,7 @@
         <% if (userRole === 'guard') { %>
             <a href="#emergencyUnlock" onclick="showEmergencyUnlock()" style="color: red;">Emergency Locker Unlock</a>
         <% } %>
+        <a href="#" id="logoutButton" class="logout-button">Logout</a>
     </div>
 
     <div class="main-content">
@@ -38,6 +39,7 @@
         
         <div class="content">
             showWelcomePage();
+            
         </div>
 
         <div class="bottom-bar">
@@ -56,6 +58,13 @@
 </script>
 
 <script>
+
+document.getElementById('logoutButton').addEventListener('click', function() {
+    // Implement your logout logic here
+    // For example, redirect to a logout page
+    window.location.href = '/'; // Update with your logout URL
+});
+
 
 document.addEventListener('DOMContentLoaded', (event) => {
     showWelcomePage();
@@ -192,7 +201,6 @@ function createYearSelector() {
     return yearSelectorDiv;
 }
 
-
 function showCalendar() {
     const contentDiv = document.querySelector('.content');
     contentDiv.innerHTML = ''; // Clear existing content
@@ -206,7 +214,15 @@ function showCalendar() {
     calendarDiv.id = 'calendarDiv';
     calendarDiv.innerHTML = generateCalendar();
     contentDiv.appendChild(calendarDiv);
+
+    // Show the reminder alert after the calendar is loaded
+    
+    setTimeout(function() {
+        alert('Kindly reminder: Please remember to return and clear your locker before the end of your rental period.');
+    }, 250); 
+
 }
+
 
 
 function generateCalendar() {
@@ -313,37 +329,40 @@ function showVirtualKeypad() {
 function submitKeypadInput() {
     const inputCode = document.getElementById('display').value;
     const correctPassword = "12345678";
-    const fieldToUpdate = 5; 
+    const fieldToUpdate = 6; 
     const apiKey = "B66AQC1B5H7758EU"; 
 
-    let updateURL = `https://api.thingspeak.com/update?api_key=${apiKey}`;
+    function updateField(value) {
+        const updateURL = `https://api.thingspeak.com/update?api_key=${apiKey}&field${fieldToUpdate}=${value}`;
 
-    if (inputCode === correctPassword) {
-        updateURL += `&field${fieldToUpdate}=1`;
-    } else {
-        updateURL += `&field${fieldToUpdate}=0`;
+        fetch(updateURL)
+            .then(response => response.text())
+            .then(data => {
+                if (data > 0) {
+                    console.log('ThingSpeak update successful. Entry number: ' + data);
+                } else {
+                    console.log('ThingSpeak update failed.');
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
     }
 
-    fetch(updateURL)
-        .then(response => response.text())
-        .then(data => {
-            if (data > 0) { // ThingSpeak returns the entry number if the update was successful
-                console.log('ThingSpeak update successful. Entry number: ' + data);
-                if (inputCode === correctPassword) {
-                    alert('Locker Unlocked!');
-                } else {
-                    alert('Incorrect password!');
-                }
-            } else {
-                console.log('ThingSpeak update failed.');
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
+    if (inputCode === correctPassword) {
+        updateField(1);
+        alert('Locker Unlocked!');
+        // setTimeout(() => {
+        //     updateField(0); // Reset the field to 0 after 15 seconds
+        // }, 15000);
+    } else {
+        updateField(0);
+        alert('Incorrect password!');
+    }
 
     clearDisplay();
 }
+
 
 
 
@@ -446,35 +465,60 @@ function changeCameraResolution() {
 function showSuspiciousAlerts() {
     const channelID = 2315925;
     const apiKey = "CGTJDYPH6BL5TVIP"; // Your ThingSpeak Read API key
-    const fieldNumber = 5; // Field number for locker status
+    const fieldNumberLocal = 5; // Field number for local unlock status
+    const fieldNumberOnline = 6; // Field number for online unlock status
     const results = 10; // Number of results to retrieve
 
-    let readURL = `https://api.thingspeak.com/channels/${channelID}/fields/${fieldNumber}.json?api_key=${apiKey}&results=${results}`;
+    let readURL = `https://api.thingspeak.com/channels/${channelID}/fields/${fieldNumberLocal}.json?api_key=${apiKey}&results=${results}`;
+    let readURL2 = `https://api.thingspeak.com/channels/${channelID}/fields/${fieldNumberOnline}.json?api_key=${apiKey}&results=${results}`;
 
-    fetch(readURL)
-        .then(response => response.json())
-        .then(data => {
-            buildStatusTable(data.feeds);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
+    Promise.all([
+        fetch(readURL).then(response => response.json()),
+        fetch(readURL2).then(response => response.json())
+    ])
+    .then(([dataLocal, dataOnline]) => {
+        let combinedFeeds = dataLocal.feeds.map((feed, index) => {
+            return {
+                ...feed,
+                field6: dataOnline.feeds[index].field6
+            };
         });
+        buildStatusTable(combinedFeeds);
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
 }
+
 
 function buildStatusTable(feeds) {
     const contentDiv = document.querySelector('.content');
-    let tableHTML = '<h2>Suspicious Alerts</h2><table><tr><th>Time</th><th>Status</th></tr>';
+    let tableHTML = '<h2>Suspicious Alerts</h2><table><tr><th>Time</th><th>Unlock Status</th></tr>';
 
     feeds.forEach(feed => {
-        const status = feed.field5 === "1" ? 'Unlocked' : 'Locked';
-        const rowClass = feed.field5 === "1" ? 'suspicious' : ''; // Add a class for styling if unlocked
+        let status = 'Locked';
+
+        if (feed.field6 === "1") {
+            // If unlocked online, prioritize this status
+            status = 'Unlocked (Online)';
+        } else if (feed.field5 === "1") {
+            // If not unlocked online, but unlocked locally
+            status = 'Unlocked (Local)';
+        }
+
+        // Row class for styling if unlocked
+        const rowClass = (feed.field5 === "1" || feed.field6 === "1") ? 'suspicious' : '';
         const time = new Date(feed.created_at).toLocaleString();
+        
         tableHTML += `<tr class="${rowClass}"><td>${time}</td><td>${status}</td></tr>`;
     });
 
     tableHTML += '</table>';
     contentDiv.innerHTML = tableHTML;
 }
+
+
+
 
 document.querySelector('a[href="#suspiciousReports"]').addEventListener('click', showSuspiciousAlerts);
 
@@ -664,30 +708,86 @@ function showEmergencyUnlock() {
 }
 
 
+function showEmergencyUnlock() {
+    const contentDiv = document.querySelector('.content');
+    contentDiv.innerHTML = '';
+
+    // Emergency Container
+    const emergencyContainer = document.createElement('div');
+    emergencyContainer.className = 'emergency-container';
+
+    // Title
+    const emergencyTitle = document.createElement('h2');
+    emergencyTitle.className = 'emergency-title';
+    emergencyTitle.textContent = 'Emergency Locker Unlock';
+    emergencyContainer.appendChild(emergencyTitle);
+
+    // Description
+    const emergencyDescription = document.createElement('p');
+    emergencyDescription.className = 'emergency-description';
+    emergencyDescription.textContent = 'This section is dedicated for emergency use by security personnel. It allows for immediate unlocking of lockers in urgent situations, such as safety concerns or when access is required by law enforcement. Please use this function responsibly and only in legitimate emergencies.';
+    emergencyContainer.appendChild(emergencyDescription);
+
+    // Form
+    const form = document.createElement('form');
+    form.id = 'emergencyUnlockForm';
+    form.className = 'emergency-form';
+    form.innerHTML = `
+        <label for="lockerNumber">Locker Number:</label>
+        <input type="text" id="lockerNumber" name="lockerNumber"><br>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username"><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password"><br>
+        <input type="submit" value="Unlock Locker">
+    `;
+    emergencyContainer.appendChild(form);
+
+    // Append to Content Div
+    contentDiv.appendChild(emergencyContainer);
+
+    // Event Listener for Form Submission
+    document.getElementById('emergencyUnlockForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        emergencyUnlock();
+    });
+}
+
 function emergencyUnlock() {
     const lockerNumber = document.getElementById('lockerNumber').value;
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
-    // Assuming you have an endpoint '/emergencyUnlock' to handle this request
-    const formData = new URLSearchParams();
-    formData.append('lockerNumber', lockerNumber);
-    formData.append('username', username);
-    formData.append('password', password);
+    // Assuming you have validation or other processes here
 
-    fetch('/emergencyUnlock', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: formData
-    })
-    .then(response => response.text())
-    .then(data => {
-        alert(data); // Display a message to the user
-    })
-    .catch(error => console.error('Error:', error));
+    // Update field 6 on ThingSpeak
+    updateField(1); // Set field 6 to 1 for unlocking
+
 }
+
+function updateField(value) {
+    const apiKey = "B66AQC1B5H7758EU"; // Use your ThingSpeak Write API key
+    const fieldToUpdate = 6; // Field 6 for emergency unlock
+
+    const updateURL = `https://api.thingspeak.com/update?api_key=${apiKey}&field${fieldToUpdate}=${value}`;
+
+    fetch(updateURL)
+        .then(response => response.text())
+        .then(data => {
+            if (data > 0) {
+                console.log('ThingSpeak update successful. Entry number: ' + data);
+                alert('Emergency Unlock Successful!');
+            } else {
+                console.log('ThingSpeak update failed.');
+                alert('Emergency Unlock Failed!');
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            alert('Error in Emergency Unlock!');
+        });
+}
+
 
 </script>
 
