@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="../css/qrcode.css">   
     <link rel="stylesheet" href="../css/emergency.css">   
     <link rel="stylesheet" href="../css/user-settings.css">
+    <link rel="stylesheet" href="../css/camera.css">
 </head>
 <body>
     <div class="sidebar">
@@ -388,15 +389,59 @@ function showCamera() {
                 <option selected="selected" value="QQVGA">160x120</option>
             </select>
         </div>
-        <div id="camera-feed" style="width:100%;height:auto;">
-            <img id="camera-stream" src="http://192.168.207.233:81/stream" style="width:100%;height:auto;">
+        <div id="camera-feed" style="width:auto;height:auto;">
+            <img id="camera-stream" src="http://192.168.0.180:81/stream" style="width:auto;height:auto">
         </div>
     `;
 }
 
 function changeCameraResolution() {
     const resolution = document.getElementById('resolution').value;
+    const cameraStream = document.getElementById('camera-stream');
+
+    switch (resolution) {
+        case 'UXGA':
+            cameraStream.style.width = '1600px';
+            cameraStream.style.height = '1200px';
+            break;
+        case 'SXGA':
+            cameraStream.style.width = '1280px';
+            cameraStream.style.height = '1024px';
+            break;
+        case 'XGA':
+            cameraStream.style.width = '1024px';
+            cameraStream.style.height = '768px';
+            break;
+        case 'SVGA':
+            cameraStream.style.width = '800px';
+            cameraStream.style.height = '600px';
+            break;
+        case 'VGA':
+            cameraStream.style.width = '640px';
+            cameraStream.style.height = '480px';
+            break;
+        case 'CIF':
+            cameraStream.style.width = '400px';
+            cameraStream.style.height = '296px';
+            break;
+        case 'QVGA':
+            cameraStream.style.width = '320px';
+            cameraStream.style.height = '240px';
+            break;
+        case 'HQVGA':
+            cameraStream.style.width = '240px';
+            cameraStream.style.height = '176px';
+            break;
+        case 'QQVGA':
+            cameraStream.style.width = '160px';
+            cameraStream.style.height = '120px';
+            break;
+        default:
+            cameraStream.style.width = '100%'; // Default to full width if resolution not found
+            cameraStream.style.height = 'auto';
+    }
 }
+
 
 function showSuspiciousAlerts() {
     const channelID = 2315925;
