@@ -6,14 +6,13 @@ function showWelcomePage() {
     contentDiv.innerHTML = `
         <div class="welcome-container">
             <h2 class="welcome-title">${greeting}, ${displayName}!</h2>
-            <p class="welcome-message">Your locker number: [ ${lockerNumber} ]</p>
+            <p class="welcome-message">Your locker number :  [ ${lockerNumber} ]</p>
             <img src="../images/locker.jpg" alt="locker" class="welcome-image">
         </div>
     `;
 
 
 }
-
 
 function getGreetingByTime() {
     const hour = new Date().getHours();

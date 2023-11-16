@@ -36,6 +36,7 @@
         <div class="title-bar">
             <h1>SmartLocker Campus System 🔒</h1>
         </div>
+        <div class="title-bar-padding"></div>
         
         <div class="content">
             showWelcomePage();
@@ -60,9 +61,7 @@
 <script>
 
 document.getElementById('logoutButton').addEventListener('click', function() {
-    // Implement your logout logic here
-    // For example, redirect to a logout page
-    window.location.href = '/'; // Update with your logout URL
+    window.location.href = '/'; 
 });
 
 
@@ -76,8 +75,7 @@ document.getElementById('homeLink').addEventListener('click', function() {
   showWelcomePage();
 });
 
-
-  function loadLockerStatus() {
+function loadLockerStatus() {
       const channelID = 2315925;
       //2315925 ,51245
       fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?results=60`)
@@ -92,22 +90,20 @@ document.getElementById('homeLink').addEventListener('click', function() {
     contentDiv.innerHTML = '<h2>Locker Status</h2><select id="dataSelection" onchange="updateChartDisplay()"><option value="Humidity">Humidity</option><option value="Temperature">Temperature</option><option value="Light">Light</option></select>';
 
     const chartContainerStyle = 'width:95%; max-width:flex; height:450px; margin:auto;';
+
     // Prepare containers for charts
     const canvasHumidity = document.createElement('canvas');
     canvasHumidity.style = chartContainerStyle;
     canvasHumidity.id = 'HumidityChart';
 
-
     const canvastemperature = document.createElement('canvas');
     canvastemperature.style = chartContainerStyle;
     canvastemperature.id = 'TemperatureChart';
-
 
     const canvasLight = document.createElement('canvas');
     canvasLight.style = chartContainerStyle;
     canvasLight.id = 'LightChart';
     
-
     contentDiv.appendChild(canvasHumidity);
     contentDiv.appendChild(canvastemperature);
     contentDiv.appendChild(canvasLight);
@@ -119,7 +115,7 @@ document.getElementById('homeLink').addEventListener('click', function() {
                 labels: feeds.map(feed => new Date(feed.created_at).toLocaleTimeString()),
                 datasets: [{
                     label: 'Humidity',
-                    data: feeds.map(feed => feed.field1), // Assuming field1 is Humidity
+                    data: feeds.map(feed => feed.field1), // field1 is Humidity
                     borderColor: 'rgb(54, 162, 235)',
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
                 }]
@@ -133,7 +129,7 @@ document.getElementById('homeLink').addEventListener('click', function() {
                 labels: feeds.map(feed => new Date(feed.created_at).toLocaleTimeString()),
                 datasets: [{
                     label: 'Temperature',
-                    data: feeds.map(feed => feed.field2), // Assuming field2 is temperature
+                    data: feeds.map(feed => feed.field2), // field2 is temperature
                     borderColor: 'rgb(255, 99, 132)',
                     backgroundColor: 'rgba(255, 99, 132, 0.5)',
                 }]
@@ -147,14 +143,14 @@ document.getElementById('homeLink').addEventListener('click', function() {
                 labels: feeds.map(feed => new Date(feed.created_at).toLocaleTimeString()),
                 datasets: [{
                     label: 'Light',
-                    data: feeds.map(feed => feed.field3), // Assuming field3 is Light
+                    data: feeds.map(feed => feed.field3), // field3 is Light
                     borderColor: 'rgb(255, 206, 86)',
                     backgroundColor: 'rgba(255, 206, 86, 0.2)',
                 }]
             }
     });
 
-    // Initially, hide all except temperature chart
+    // Initially, hide all except Humidity chart
     canvastemperature.style.display = 'none';
     canvasLight.style.display = 'none';
 }
@@ -166,6 +162,7 @@ function updateChartDisplay() {
     document.getElementById('LightChart').style.display = selectedData === 'Light' ? 'block' : 'none';
 }
 
+//calendar
 let selectedYear = new Date().getFullYear(); // Default to current year
 
 function initializeYearSelector() {
@@ -182,8 +179,6 @@ function updateCalendarYear() {
         calendarDiv.innerHTML = generateCalendar(); 
     }
 }
-
-
 
 function createYearSelector() {
     const yearSelectorDiv = document.createElement('div');
@@ -203,7 +198,7 @@ function createYearSelector() {
 
 function showCalendar() {
     const contentDiv = document.querySelector('.content');
-    contentDiv.innerHTML = ''; // Clear existing content
+    contentDiv.innerHTML = ''; 
 
     // Append year selector
     const yearSelector = createYearSelector();
@@ -216,14 +211,11 @@ function showCalendar() {
     contentDiv.appendChild(calendarDiv);
 
     // Show the reminder alert after the calendar is loaded
-    
     setTimeout(function() {
         alert('Kindly reminder: Please remember to return and clear your locker before the end of your rental period.');
     }, 250); 
 
 }
-
-
 
 function generateCalendar() {
     let calendarHTML = '<div class="calendar">';
@@ -234,9 +226,6 @@ function generateCalendar() {
     return calendarHTML;
 }
 
-
-
-
 const rentalStartDate = new Date(2023, 8, 12); // 12 September 2023
 const rentalEndDate = new Date(2024, 6, 31);   // 31 July 2024
 
@@ -246,7 +235,6 @@ function getRentalDates(year) {
         end: new Date(year + 1, 6, 31) // 31 July of the next year
     };
 }
-
 
 function createMonthCalendar(month, year) {
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];

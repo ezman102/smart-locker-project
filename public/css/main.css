@@ -11,6 +11,24 @@
     color: #ffffff;
     padding: 1px 1px;
     text-align: center;
+    font-size: 11px;
+
+}
+
+.title-bar-padding {
+    height: 10px; /* Adjust this value for more or less padding */
+    background-color: rgba(255, 255, 255, 0.197);
+}
+
+
+body {
+    /* font-family: Arial, sans-serif; */
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 90vh;
+    background-color: #f0f0f0;
 }
 
 .bottom-bar {
