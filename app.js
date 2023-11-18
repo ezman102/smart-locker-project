@@ -41,8 +41,6 @@ const port = 3000;
     });
   }
   
-  connectToDB();
-
   startServer();
 
   app.get('/', (req, res) => {
