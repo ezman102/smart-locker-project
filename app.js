@@ -26,7 +26,7 @@ const port = 3000;
     try {
       await client.connect();
       console.log('Connected successfully to MongoDB server');
-      db = client.db(dbName); // Set the db variable
+      db = client.db(dbName); 
     } catch (error) {
       console.error('Failed to connect to MongoDB:', error);
       process.exit(1);
@@ -114,7 +114,6 @@ const port = 3000;
 
     // Authenticate the guard
 
-    // Update the ThingSpeak channel
     const apiKey = "B66AQC1B5H7758EU";
     const fieldToUpdate = 5; // Adjust based on your setup
     const updateURL = `https://api.thingspeak.com/update?api_key=${apiKey}&field${fieldToUpdate}=1`;
