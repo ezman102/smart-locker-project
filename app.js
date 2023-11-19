@@ -5,6 +5,7 @@ const fs = require('fs');
 const https = require('https');
 const bcrypt = require('bcrypt');
 const { MongoClient } = require('mongodb');
+var nodemailer = require('nodemailer');
 
 const port = 3000;
 
@@ -43,6 +44,8 @@ const port = 3000;
   
   startServer();
 
+  app.use(express.json());
+
   app.get('/', (req, res) => {
     res.render('login');
   });
@@ -80,7 +83,7 @@ const port = 3000;
   });
 
   app.get('/home', (req, res) => {
-    const userRole = req.session.userRole; // Adjust according to your implementation
+    const userRole = req.session.userRole;
     res.render('home', { userRole: userRole });
   });
 
@@ -102,33 +105,6 @@ const port = 3000;
       console.log('User created successfully');
     } catch (error) {
       console.error('Error creating user:', error);
-      throw error;
-    }
-  }
-
-  async function updateUserSettings(username, email, password, notifications) {
-    try {
-      // Validate and sanitize the inputs (implement according to your needs)
-      if (!username || !email) throw new Error('Username and email are required.');
-
-      let updateObject = {
-        email: email,
-        notifications: notifications
-      };
-
-      // Only hash the password if it's provided and needs to be changed
-      if (password) {
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-        updateObject.password = hashedPassword;
-      }
-
-      // Update user settings in MongoDB
-      await db.collection('users').updateOne({ username: username }, { $set: updateObject });
-
-      console.log('User settings updated successfully.');
-    } catch (error) {
-      console.error('Error updating user settings:', error);
       throw error;
     }
   }
@@ -156,6 +132,81 @@ const port = 3000;
         res.status(500).send('Error unlocking locker');
     }
   });
+
+  app.post('/sendEmail', async (req, res) => {
+    const { lockerNumber, username } = req.body;
+
+    try {
+        // Fetch user's email from the database using the inputted username
+        const user = await db.collection('users').findOne({ username: username });
+        if (!user) {
+            return res.status(404).send('User not found.');
+        }
+
+        const userEmail = user.email; // Extract the email from the user document
+
+        var transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'smartlockercampus@gmail.com',
+                pass: 'ovqfqqvtgsaukdvs'
+            }
+        });
+
+        // Email HTML content
+        const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif;}
+            .container { width: 100%; max-width:auto; margin: auto; }
+            .header { background-color: #004a7c; color: white; padding: 10px; text-align: center; font-size: 15px;}
+            .content { padding: 20px; font-size: 13px; }
+            .footer { background-color: #f2f2f2; padding: 10px; text-align: center; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h2>SmartLocker Campus System</h2>
+            </div>
+            <div class="content">
+                <p>Dear ${username},</p>
+                <p>An emergency unlock has been performed on <strong>Locker Number: ${lockerNumber}</strong> by Secuity Guard.</p>
+                <p>If you have any questions or did not request this action, please contact our support team immediately.</p>
+            </div>
+            <div class="footer">
+                <p>Contact us at support@smartlockercampus.com</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+        var mailOptions = {
+            from: 'smartlockercampus@gmail.com',
+            to: userEmail, // Send to the user's email retrieved from the database
+            subject: 'Emergency Locker Unlock Alert',
+            html: emailHtml
+        };
+
+        transporter.sendMail(mailOptions, function(error, info){
+            if (error) {
+                console.log(error);
+                return res.status(500).send('Error sending email.');
+            } else {
+                console.log('Email sent: ' + info.response);
+                res.send('Email sent successfully.');
+            }
+        });
+
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Error retrieving user information.');
+    }
+});
+
 
 
   app.post('/updatePassword', async (req, res) => {
