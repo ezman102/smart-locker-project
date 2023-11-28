@@ -27,7 +27,7 @@ The SmartLocker Campus System is an innovative solution designed to manage and s
 - **Chart.js:** For dynamic data representation.
 - **QRCode.js:** To generate and read QR codes.
 - **Instascan.js:** For real-time camera scanning of QR codes.
-- **Node.js and Express.js:** Backend server development.
+- **Node.js and Express.js:** Backend server development. (Node.js Version 18.18.2)
 - **MongoDB:** Database for storing user and locker data.
 - **Nodemailer:** For sending automated emails.
 - **Bcrypt:** For secure password hashing.
@@ -55,7 +55,7 @@ The SmartLocker Campus System is an innovative solution designed to manage and s
 
 5. **Start the Server:**
    ```
-   npm start
+   node app.js
    ```
 
 6. **Access the Application:**
