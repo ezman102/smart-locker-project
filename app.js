@@ -10,7 +10,7 @@ var nodemailer = require('nodemailer');
 const { ObjectId } = require('mongodb');
 
 app.use(session({
-  secret: 'your secret key', 
+  secret: 'Very Complex String secret key', // will change when production use
   resave: false,
   saveUninitialized: true,
   cookie: { secure: true }  // using https
@@ -188,7 +188,7 @@ app.post('/verifyKeypadInput', async (req, res) => {
     // Authenticate the guard
 
     const apiKey = "B66AQC1B5H7758EU";
-    const fieldToUpdate = 5; // Adjust based on your setup
+    const fieldToUpdate = 5; 
     const updateURL = `https://api.thingspeak.com/update?api_key=${apiKey}&field${fieldToUpdate}=1`;
 
     try {
