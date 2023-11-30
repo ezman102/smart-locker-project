@@ -402,40 +402,31 @@ function showVirtualKeypad() {
 
 function submitKeypadInput() {
     const inputCode = document.getElementById('display').value;
-    const correctPassword = "12345678";
-    const fieldToUpdate = 6; 
-    const apiKey = "B66AQC1B5H7758EU"; 
-
-    function updateField(value) {
-        const updateURL = `https://api.thingspeak.com/update?api_key=${apiKey}&field${fieldToUpdate}=${value}`;
-
-        fetch(updateURL)
-            .then(response => response.text())
-            .then(data => {
-                if (data > 0) {
-                    console.log('ThingSpeak update successful. Entry number: ' + data);
-                } else {
-                    console.log('ThingSpeak update failed.');
-                }
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-    }
-
-    if (inputCode === correctPassword) {
-        updateField(1);
-        alert('Locker Unlocked!');
-        setTimeout(() => {
-            updateField(0); // Reset the field to 0 after 15 seconds
-        }, 15000);
-    } else {
-        updateField(0);
-        alert('Incorrect password!');
-    }
-
     clearDisplay();
+
+    // Send the input code to the server for verification
+    fetch('/verifyKeypadInput', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ inputCode: inputCode })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.isCorrect) {
+            alert('Locker Unlocked!');
+        } else {
+            alert('Incorrect password!');
+        }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+        alert('Error verifying the code');
+    });
 }
+
+
 
 
 
