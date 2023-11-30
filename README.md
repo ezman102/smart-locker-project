@@ -32,7 +32,10 @@ The SmartLocker Campus System is an innovative solution designed to manage and s
 - **Nodemailer:** For sending automated emails.
 - **Bcrypt:** For secure password hashing.
 
+
 ## Installation and Setup
+
+Before you begin the installation process, ensure you have Node.js version 18.18.2 installed on your system. If you don't have this version, you can download it from the [Node.js website](https://nodejs.org/).
 
 1. **Clone the Repository:**
    ```
@@ -60,6 +63,12 @@ The SmartLocker Campus System is an innovative solution designed to manage and s
 
 6. **Access the Application:**
    - Open a web browser and navigate to `https://localhost:3000`.
+
+---
+
+**Note:** Replace `[repository-url]` with the actual URL of the GitHub repository. Ensure that you have Node.js version 18.18.2 installed for optimal compatibility and performance. If you encounter any issues with a different version of Node.js, try switching to version 18.18.2.
+
+---
 
 ## Usage
 
