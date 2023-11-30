@@ -279,8 +279,6 @@ app.post('/verifyKeypadInput', async (req, res) => {
     }
 });
 
-
-
   app.post('/updatePassword', async (req, res) => {
     console.log(req.body); // Log the request body to debug
     const { userInput, newPassword } = req.body;
